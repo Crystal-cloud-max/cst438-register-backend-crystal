@@ -49,184 +49,243 @@ import org.springframework.test.context.ContextConfiguration;
  *  addFilters=false turns off security.  (I could not get security to work in test environment.)
  *  WebMvcTest is needed for test environment to create Repository classes.
  */
-@ContextConfiguration(classes = { ScheduleController.class })
+@ContextConfiguration(classes =
+{ ScheduleController.class })
 @AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest
-public class JunitTestSchedule {
+public class JunitTestSchedule
+{
 
-	static final String URL = "http://localhost:8080";
-	public static final int TEST_COURSE_ID = 40442;
-	public static final String TEST_STUDENT_EMAIL = "test@csumb.edu";
-	public static final String TEST_STUDENT_NAME  = "test";
-	public static final int TEST_YEAR = 2021;
-	public static final String TEST_SEMESTER = "Fall";
+   static final String URL = "http://localhost:8080";
+   public static final int TEST_COURSE_ID = 40442;
+   public static final String TEST_STUDENT_EMAIL = "test@csumb.edu";
+   public static final String TEST_STUDENT_NAME = "test";
+   public static final int TEST_YEAR = 2021;
+   public static final String TEST_SEMESTER = "Fall";
 
-	@MockBean
-	CourseRepository courseRepository;
+   @MockBean
+   CourseRepository courseRepository;
 
-	@MockBean
-	StudentRepository studentRepository;
+   @MockBean
+   StudentRepository studentRepository;
 
-	@MockBean
-	EnrollmentRepository enrollmentRepository;
+   @MockBean
+   EnrollmentRepository enrollmentRepository;
 
-	@MockBean
-	GradebookService gradebookService;
+   @MockBean
+   GradebookService gradebookService;
 
-	@Autowired
-	private MockMvc mvc;
+   @Autowired
+   private MockMvc mvc;
 
-	@Test
-	public void addCourse()  throws Exception {
-		
-		MockHttpServletResponse response;
-		
-		Course course = new Course();
-		course.setCourse_id(TEST_COURSE_ID);
-		course.setSemester(TEST_SEMESTER);
-		course.setYear(TEST_YEAR);	
-		
-		
-		// sets the start and end date of the course
-		Calendar c = Calendar.getInstance();
-		c.set(2021,  8,  16);
-		course.setStart(new java.sql.Date( c.getTimeInMillis() ));
-		c.set(2021,  12, 16);
-		course.setEnd(new java.sql.Date( c.getTimeInMillis() ));
-		
-		Student student = new Student();
-		student.setEmail(TEST_STUDENT_EMAIL);
-		student.setName(TEST_STUDENT_NAME);
-		student.setStatusCode(0);
-		student.setStudent_id(1);
-		
-		Enrollment enrollment = new Enrollment();
-		enrollment.setCourse(course);
-		enrollment.setEnrollment_id(1);
-		enrollment.setSemester(TEST_SEMESTER);
-		enrollment.setStudent(student);
-		enrollment.setYear(TEST_YEAR);
-		
-		List<Enrollment> enrollments = new java.util.ArrayList<>();
-		enrollments.add(enrollment);
-		
-		// given  -- stubs for database repositories that return test data
-	    given(courseRepository.findById(TEST_COURSE_ID)).willReturn(Optional.of(course));
-	    given(studentRepository.findByEmail(TEST_STUDENT_EMAIL)).willReturn(student);
-	    given(enrollmentRepository.save(any(Enrollment.class))).willReturn(enrollment);
-	    given(enrollmentRepository.findStudentSchedule(TEST_STUDENT_EMAIL, TEST_YEAR, TEST_SEMESTER)).willReturn(enrollments);
-	  
-	    // create the DTO (data transfer object) for the course to add.  primary key course_id is 0.
-		ScheduleDTO.CourseDTO courseDTO = new ScheduleDTO.CourseDTO();
-		courseDTO.course_id = TEST_COURSE_ID;
-		
-		// then do an http post request with body of courseDTO as JSON
-		response = mvc.perform(
-				MockMvcRequestBuilders
-			      .post("/schedule")
-			      .content(asJsonString(courseDTO))
-			      .contentType(MediaType.APPLICATION_JSON)
-			      .accept(MediaType.APPLICATION_JSON))
-				.andReturn().getResponse();
-		
-		// verify that return status = OK (value 200) 
-		assertEquals(200, response.getStatus());
-		
-		// verify that returned data has non zero primary key
-		ScheduleDTO.CourseDTO result = fromJsonString(response.getContentAsString(), ScheduleDTO.CourseDTO.class);
-		assertNotEquals( 0  , result.id);
-		
-		// verify that repository save method was called.
-		verify(enrollmentRepository).save(any(Enrollment.class));
-		
-		// do http GET for student schedule 
-		response = mvc.perform(
-				MockMvcRequestBuilders
-			      .get("/schedule?year=" + TEST_YEAR + "&semester=" + TEST_SEMESTER)
-			      .accept(MediaType.APPLICATION_JSON))
-				.andReturn().getResponse();
-		
-		// verify that return status = OK (value 200) 
-		assertEquals(200, response.getStatus());
-		
-		// verify that returned data contains the added course 
-		ScheduleDTO scheduleDTO = fromJsonString(response.getContentAsString(), ScheduleDTO.class);
-		
-		boolean found = false;		
-		for (ScheduleDTO.CourseDTO sc : scheduleDTO.courses) {
-			if (sc.course_id == TEST_COURSE_ID) {
-				found = true;
-			}
-		}
-		assertEquals(true, found, "Added course not in updated schedule.");
-		
-		// verify that repository find method was called.
-		verify(enrollmentRepository, times(1)).findStudentSchedule(TEST_STUDENT_EMAIL, TEST_YEAR, TEST_SEMESTER);
-	}
-	
-	@Test
-	public void dropCourse()  throws Exception {
-		
-		MockHttpServletResponse response;
-		
-		Course course = new Course();
-		course.setCourse_id(TEST_COURSE_ID);
-		course.setCourse_id(TEST_COURSE_ID);
-		course.setSemester(TEST_SEMESTER);
-		course.setYear(TEST_YEAR);	
-		
-		Calendar c = Calendar.getInstance();
-		c.set(2021,  8,  16);
-		course.setStart(new java.sql.Date( c.getTimeInMillis() ));  // course start date 8-16-2021
-		c.set(2021,  12, 16);
-		course.setEnd(new java.sql.Date( c.getTimeInMillis() ));
-		
-		Student student = new Student();
-		student.setEmail(TEST_STUDENT_EMAIL);
-		student.setName(TEST_STUDENT_NAME);
-		student.setStatusCode(0);
-		student.setStudent_id(1);
-		
-		Enrollment enrollment = new Enrollment();
-		enrollment.setCourse(course);
-		enrollment.setEnrollment_id(1);
-		enrollment.setSemester(TEST_SEMESTER);
-		enrollment.setStudent(student);
-		enrollment.setYear(TEST_YEAR);
-	
-		// given  -- stubs for database repositories that return test data
-	    given(enrollmentRepository.findById(1)).willReturn(Optional.of(enrollment));
-	    // note:  it is not necessary to create a mock for enrollmentRepository.delete.
-	    //   Because it is a method that has a void return type, Mockito will mock it automatically.
-	  
-		// then 
-		response = mvc.perform(
-				MockMvcRequestBuilders
-			      .delete("/schedule/1"))
-				.andReturn().getResponse();
-		
-		// verify that return status = OK (value 200) 
-		assertEquals(200, response.getStatus());
-	
-		// verify that repository delete method was called.
-		verify(enrollmentRepository).delete(any(Enrollment.class));
-	}
-		
-	private static String asJsonString(final Object obj) {
-		try {
+   @Test
+   public void addCourse() throws Exception
+   {
 
-			return new ObjectMapper().writeValueAsString(obj);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+      MockHttpServletResponse response;
 
-	private static <T> T  fromJsonString(String str, Class<T> valueType ) {
-		try {
-			return new ObjectMapper().readValue(str, valueType);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+      Course course = new Course();
+      course.setCourse_id(TEST_COURSE_ID);
+      course.setSemester(TEST_SEMESTER);
+      course.setYear(TEST_YEAR);
+
+      // sets the start and end date of the course
+      Calendar c = Calendar.getInstance();
+      c.set(2021, 8, 16);
+      course.setStart(new java.sql.Date(c.getTimeInMillis()));
+      c.set(2021, 12, 16);
+      course.setEnd(new java.sql.Date(c.getTimeInMillis()));
+
+      Student student = new Student();
+      student.setEmail(TEST_STUDENT_EMAIL);
+      student.setName(TEST_STUDENT_NAME);
+      student.setStatusCode(0);
+      student.setStudent_id(1);
+
+      Enrollment enrollment = new Enrollment();
+      enrollment.setCourse(course);
+      enrollment.setEnrollment_id(1);
+      enrollment.setSemester(TEST_SEMESTER);
+      enrollment.setStudent(student);
+      enrollment.setYear(TEST_YEAR);
+
+      List<Enrollment> enrollments = new java.util.ArrayList<>();
+      enrollments.add(enrollment);
+
+      // given -- stubs for database repositories that return test data
+      given(courseRepository.findById(TEST_COURSE_ID)).willReturn(Optional.of(course));
+      given(studentRepository.findByEmail(TEST_STUDENT_EMAIL)).willReturn(student);
+      given(enrollmentRepository.save(any(Enrollment.class))).willReturn(enrollment);
+      given(enrollmentRepository.findStudentSchedule(TEST_STUDENT_EMAIL, TEST_YEAR, TEST_SEMESTER))
+            .willReturn(enrollments);
+
+      // create the DTO (data transfer object) for the course to add. primary key
+      // course_id is 0.
+      ScheduleDTO.CourseDTO courseDTO = new ScheduleDTO.CourseDTO();
+      courseDTO.course_id = TEST_COURSE_ID;
+
+      // then do an http post request with body of courseDTO as JSON
+      response = mvc
+            .perform(MockMvcRequestBuilders.post("/schedule").content(asJsonString(courseDTO))
+                  .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+            .andReturn().getResponse();
+
+      // verify that return status = OK (value 200)
+      assertEquals(200, response.getStatus());
+
+      // verify that returned data has non zero primary key
+      ScheduleDTO.CourseDTO result = fromJsonString(response.getContentAsString(), ScheduleDTO.CourseDTO.class);
+      assertNotEquals(0, result.id);
+
+      // verify that repository save method was called.
+      verify(enrollmentRepository).save(any(Enrollment.class));
+
+      // do http GET for student schedule
+      response = mvc.perform(MockMvcRequestBuilders.get("/schedule?year=" + TEST_YEAR + "&semester=" + TEST_SEMESTER)
+            .accept(MediaType.APPLICATION_JSON)).andReturn().getResponse();
+
+      // verify that return status = OK (value 200)
+      assertEquals(200, response.getStatus());
+
+      // verify that returned data contains the added course
+      ScheduleDTO scheduleDTO = fromJsonString(response.getContentAsString(), ScheduleDTO.class);
+
+      boolean found = false;
+      for (ScheduleDTO.CourseDTO sc : scheduleDTO.courses)
+      {
+         if (sc.course_id == TEST_COURSE_ID)
+         {
+            found = true;
+         }
+      }
+      assertEquals(true, found, "Added course not in updated schedule.");
+
+      // verify that repository find method was called.
+      verify(enrollmentRepository, times(1)).findStudentSchedule(TEST_STUDENT_EMAIL, TEST_YEAR, TEST_SEMESTER);
+   }
+
+   @Test
+   public void dropCourse() throws Exception
+   {
+
+      MockHttpServletResponse response;
+
+      Course course = new Course();
+      course.setCourse_id(TEST_COURSE_ID);
+      course.setCourse_id(TEST_COURSE_ID);
+      course.setSemester(TEST_SEMESTER);
+      course.setYear(TEST_YEAR);
+
+      Calendar c = Calendar.getInstance();
+      c.set(2021, 8, 16);
+      course.setStart(new java.sql.Date(c.getTimeInMillis())); // course start date 8-16-2021
+      c.set(2021, 12, 16);
+      course.setEnd(new java.sql.Date(c.getTimeInMillis()));
+
+      Student student = new Student();
+      student.setEmail(TEST_STUDENT_EMAIL);
+      student.setName(TEST_STUDENT_NAME);
+      student.setStatusCode(0);
+      student.setStudent_id(1);
+
+      Enrollment enrollment = new Enrollment();
+      enrollment.setCourse(course);
+      enrollment.setEnrollment_id(1);
+      enrollment.setSemester(TEST_SEMESTER);
+      enrollment.setStudent(student);
+      enrollment.setYear(TEST_YEAR);
+
+      // given -- stubs for database repositories that return test data
+      given(enrollmentRepository.findById(1)).willReturn(Optional.of(enrollment));
+      // note: it is not necessary to create a mock for enrollmentRepository.delete.
+      // Because it is a method that has a void return type, Mockito will mock it
+      // automatically.
+
+      // then
+      response = mvc.perform(MockMvcRequestBuilders.delete("/schedule/1")).andReturn().getResponse();
+
+      // verify that return status = OK (value 200)
+      assertEquals(200, response.getStatus());
+
+      // verify that repository delete method was called.
+      verify(enrollmentRepository).delete(any(Enrollment.class));
+   }
+
+   /*
+    * Functions to add and change a student record. These unit tests validate the
+    * student related functionality. addStudent verifies the creation of a new
+    * student, while changeStudent tests updating an existing student, ensuring
+    * that the response status is 200 OK, and confirming the invocation of the
+    * studentRepository's save method with any Student object.
+    */
+
+// Creating a new function to add student.
+   @Test
+   public void addStudent() throws Exception
+   {
+      MockHttpServletResponse response;
+
+      // Test student DTO object with updated student name and email.
+      Student testStudent = new Student();
+      // Perform a POST request to create a new student with the test student DT
+      response = mvc
+            .perform(MockMvcRequestBuilders.post("/student/create").content(asJsonString(testStudent))
+                  .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+            .andReturn().getResponse();
+      // Verify status is ok
+      assertEquals(200, response.getStatus());
+      // Verify student calling object
+      verify(studentRepository).save(any(Student.class));
+   }
+
+// Function to change a student record.
+   @Test
+   public void changeStudent() throws Exception
+   {
+      // Creating a new student object and set its properties
+      MockHttpServletResponse response;
+      Student student = new Student();
+      student.setEmail(TEST_STUDENT_EMAIL);
+      student.setName(TEST_STUDENT_NAME);
+      student.setStatusCode(0);
+      student.setStudent_id(1);
+      given(studentRepository.findById(1)).willReturn(Optional.of(student));
+
+      // Test student object with updated student name and email.
+      Student studentDTO = new Student();
+            
+      // Perform a POST request to create a new student with the test student DT
+      response = mvc
+            .perform(MockMvcRequestBuilders.post("/student/update").content(asJsonString(studentDTO))
+                  .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+            .andReturn().getResponse();
+      // Verify status is ok
+      assertEquals(200, response.getStatus());
+      // Verify student calling object
+      verify(studentRepository).save(any(Student.class));
+   }
+
+   private static String asJsonString(final Object obj)
+   {
+      try
+      {
+
+         return new ObjectMapper().writeValueAsString(obj);
+      } catch (Exception e)
+      {
+         throw new RuntimeException(e);
+      }
+   }
+
+   private static <T> T fromJsonString(String str, Class<T> valueType)
+   {
+      try
+      {
+         return new ObjectMapper().readValue(str, valueType);
+      } catch (Exception e)
+      {
+         throw new RuntimeException(e);
+      }
+   }
 
 }
