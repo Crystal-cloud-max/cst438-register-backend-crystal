@@ -5,9 +5,10 @@ import java.sql.Date;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+//class is annotated
 @Entity
 public class Course {
-	
+	//primary key is defined
 	@Id
 	private int course_id;
 	private int year;
@@ -119,5 +120,4 @@ public class Course {
 				+ ", title=" + title + ", times=" + times + ", building=" + building + ", room=" + room
 				+ ", instructor=" + instructor + ", start=" + start + ", end=" + end + "]";
 	}
-
 }
