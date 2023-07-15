@@ -3,7 +3,7 @@ package com.cst438.domain;
 import java.util.List;
 
 public class CourseDTOG {
-
+   //inner class each course has a grade
 	public static class GradeDTO {
 		public String student_email;
 		public String student_name;
@@ -23,6 +23,5 @@ public class CourseDTOG {
 	public String toString() {
 		return "CourseDTOG [course_id=" + course_id + ", grades=[" + grades + "] ]";
 	}
-
 
 }

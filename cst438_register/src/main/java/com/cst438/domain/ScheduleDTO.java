@@ -3,7 +3,7 @@ package com.cst438.domain;
 import java.util.List;
 
 public class ScheduleDTO {
-
+   //inner class schedule has a course
 	public static class CourseDTO {
 
 		public int id;
@@ -81,9 +81,7 @@ public class ScheduleDTO {
 			} else if (!title.equals(other.title))
 				return false;
 			return true;
-		}
-		
-		
+		}		
 	}
 
 	public String student_email;
@@ -129,6 +127,4 @@ public class ScheduleDTO {
 		return true;
 	}
 	
-	
-
 }

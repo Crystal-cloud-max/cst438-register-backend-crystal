@@ -6,6 +6,7 @@ public class EnrollmentDTO {
 	public String studentName;
 	public int course_id;
 	
+	//default constructor
 	public EnrollmentDTO() {
 		this.id = 0;
 		this.studentEmail=null;
@@ -13,7 +14,7 @@ public class EnrollmentDTO {
 		this.course_id = 0;
 	}
 	
-	
+	//working constructor
 	public EnrollmentDTO(String studentEmail, String studentName, int course_id) {
 		this.id = 0;
 		this.studentEmail=studentEmail;
@@ -55,8 +56,5 @@ public class EnrollmentDTO {
 			return false;
 		return true;
 	}
-	
-	
-	
 	
 }

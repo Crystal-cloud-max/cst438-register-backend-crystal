@@ -25,11 +25,12 @@ import com.cst438.domain.Student;
 import com.cst438.domain.StudentRepository;
 import com.cst438.service.GradebookService;
 
+//RestController is a java class that receives HTTP requests, it works with data in JSON format
 @RestController
 @CrossOrigin(origins = {"http://localhost:3000", "https://registerf-cst438.herokuapp.com/"})
 public class ScheduleController {
 	
-	
+   //Autowired is used to enable dependency injection
 	@Autowired
 	CourseRepository courseRepository;
 	
@@ -44,27 +45,28 @@ public class ScheduleController {
 	
 	
 	/*
-	 * get current schedule for student.
+	 * get current schedule for student by year and semester
 	 */
 	@GetMapping("/schedule")
 	public ScheduleDTO getSchedule( @RequestParam("year") int year, @RequestParam("semester") String semester ) {
 		System.out.println("/schedule called.");
 		String student_email = "test@csumb.edu";   // student's email 
 		
+		//find  student by email address
 		Student student = studentRepository.findByEmail(student_email);
-		if (student != null) {
+		if (student != null) {//student exists
 			System.out.println("/schedule student "+student.getName()+" "+student.getStudent_id());
 			List<Enrollment> enrollments = enrollmentRepository.findStudentSchedule(student_email, year, semester);
 			ScheduleDTO sched = createSchedule(year, semester, student, enrollments);
 			return sched;
-		} else {
+		} else {//student does not exist in the system
 			System.out.println("/schedule student not found. "+student_email);
 			throw  new ResponseStatusException( HttpStatus.BAD_REQUEST, "Student not found. " );
 		}
 	}
 	
 
-	
+	//As an administrator, I can release the HOLD on student registration.
 	@PostMapping("/schedule")
 	@Transactional
 	public ScheduleDTO.CourseDTO addCourse( @RequestBody ScheduleDTO.CourseDTO courseDTO  ) { 
@@ -97,6 +99,7 @@ public class ScheduleController {
 		
 	}
 	
+	//
 	@DeleteMapping("/schedule/{enrollment_id}")
 	@Transactional
 	public void dropCourse(  @PathVariable int enrollment_id  ) {
