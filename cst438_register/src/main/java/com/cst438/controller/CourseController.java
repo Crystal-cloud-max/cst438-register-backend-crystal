@@ -29,6 +29,8 @@ public class CourseController {
 	public void updateCourseGrades( @RequestBody CourseDTOG courseDTO, @PathVariable("course_id") int course_id) {
 		
 		//TODO  complete this method in homework 4
+	   
+	   //receive CourseDTOG data and update enrollment table with course grades
 	   //loop through all course grades
 	   for(CourseDTOG.GradeDTO g : courseDTO.grades) {
 	      //for each grade I want to find enrollment record for that student by email and id
