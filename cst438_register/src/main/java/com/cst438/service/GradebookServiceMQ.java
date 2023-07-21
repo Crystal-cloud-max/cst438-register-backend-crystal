@@ -12,7 +12,8 @@ import com.cst438.domain.Enrollment;
 import com.cst438.domain.EnrollmentDTO;
 import com.cst438.domain.EnrollmentRepository;
 
-
+/*this class both sends msg for new enrollment and receives msg of final grades
+ * to from the gradebook backend*/
 public class GradebookServiceMQ extends GradebookService {
 	
 	@Autowired
@@ -33,7 +34,6 @@ public class GradebookServiceMQ extends GradebookService {
 	@Override
 	public void enrollStudent(String student_email, String student_name, int course_id) {
 		 
-		// TODO 
 		// create EnrollmentDTO and send to gradebookQueue
 		EnrollmentDTO enrollmentDTO = new EnrollmentDTO(student_email, student_name, course_id);
 		rabbitTemplate.convertAndSend(gradebookQueue.getName(), enrollmentDTO);
@@ -44,8 +44,7 @@ public class GradebookServiceMQ extends GradebookService {
 	@RabbitListener(queues = "registration-queue")
 	public void receive(CourseDTOG courseDTOG) {
 		System.out.println("Receive enrollment :" + courseDTOG);
-
-		//TODO 
+ 
 		// for each student grade in courseDTOG,  find the student enrollment entity, update the grade and save back to enrollmentRepository.
 		
 		//process the list of student grades

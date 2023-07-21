@@ -33,6 +33,7 @@ public class GradebookServiceREST extends GradebookService {
 	   
 	   //create a response: url comes from application.properties, enrollment is object and class is returned
 	   //response is doing HTTP POST call to the GradebookService with path name
+	   //when a student add a class, send POST msg to gradebook backend using EnrollmentDTO
 	   EnrollmentDTO response = restTemplate.postForObject(gradebook_url + "/enrollment", enrollment, EnrollmentDTO.class);
 	   System.out.println("Response from gradebook " + response);
 		

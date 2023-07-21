@@ -98,12 +98,12 @@ public class EndToEndScheduleTest {
 			Thread.sleep(SLEEP_DURATION);
 
 			// select the last of the radio buttons on the list of semesters page.
-			
+			//find the last <input> tag with type="radio" attribute
 			WebElement we = driver.findElement(By.xpath("(//input[@type='radio'])[last()]"));
 			we.click();
 
 			// Locate and click "Get Schedule" button
-			
+			//find all <a> tags in the document
 			driver.findElement(By.xpath("//a")).click();
 			Thread.sleep(SLEEP_DURATION);
 
@@ -112,7 +112,7 @@ public class EndToEndScheduleTest {
 			Thread.sleep(SLEEP_DURATION);
 
 			// enter course no and click Add button
-			
+			//find all <input> tags with attribute name="course_id"
 			driver.findElement(By.xpath("//input[@name='course_id']")).sendKeys(Integer.toString(TEST_COURSE_ID));
 			driver.findElement(By.xpath("//button[@id='Add']")).click();
 			Thread.sleep(SLEEP_DURATION);
@@ -123,7 +123,8 @@ public class EndToEndScheduleTest {
 			*/ 
 		
 			Course course = courseRepository.findById(TEST_COURSE_ID).get();
-			
+			//findElements() returns a list (possibly empty) of DOM elements returned by the XPATH expression
+			//find the <div> tag with attributes data-field="title" and data-value="CST438 Software Engineering"
 			List<WebElement> elements  = driver.findElements(By.xpath("//div[@data-field='title']/div[@class='MuiDataGrid-cellContent']"));
 			boolean found = false;
 			for (WebElement e : elements) {
